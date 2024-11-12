@@ -1,4 +1,5 @@
 ﻿using EmailProvider.Data;
+using EmailProvider.Models.DataModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace EmailProvider.Services;
