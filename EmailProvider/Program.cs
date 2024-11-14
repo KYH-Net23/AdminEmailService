@@ -1,36 +1,27 @@
+using Azure.Identity;
 
-namespace EmailProvider
-{
-	public class Program
-	{
-		public static void Main(string[] args)
-		{
-			var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
-			// Add services to the container.
+var connectionString = builder.Configuration["EmailProviderConnectionString"]!;
 
-			builder.Services.AddControllers();
-			// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-			builder.Services.AddEndpointsApiExplorer();
-			builder.Services.AddSwaggerGen();
+var vaultUrl = new Uri(builder.Configuration["VaultUrl"]!);
 
-			var app = builder.Build();
+builder.Configuration.AddAzureKeyVault(vaultUrl, new DefaultAzureCredential());
 
-			// Configure the HTTP request pipeline.
-			if (app.Environment.IsDevelopment())
-			{
-				app.UseSwagger();
-				app.UseSwaggerUI();
-			}
+builder.Services.AddControllers();
 
-			app.UseHttpsRedirection();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-			app.UseAuthorization();
+var app = builder.Build();
 
+app.UseSwagger();
+app.UseSwaggerUI();
 
-			app.MapControllers();
+app.UseHttpsRedirection();
 
-			app.Run();
-		}
-	}
-}
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();
