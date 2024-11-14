@@ -10,8 +10,12 @@ builder.Services.AddOpenApi(options =>
 {
     options.AddSecurityScheme("Bearer", scheme =>
     {
+        scheme.Scheme = "Basic";
+        scheme.BearerFormat = "JWT";
         scheme.In = ParameterLocation.Header;
-        scheme.Type = SecuritySchemeType.OAuth2;
+        scheme.Name = "Authorization";
+        scheme.Description = "Bearer token";
+        scheme.Type = SecuritySchemeType.Http;
         scheme.Flows = new OpenApiOAuthFlows
         {
             ClientCredentials = new OpenApiOAuthFlow
