@@ -1,0 +1,37 @@
+﻿using EmailProvider.EmailServices;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace EmailProvider.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class EmailController : ControllerBase
+    {
+        private readonly string _connectionString;
+        private readonly string _accessToken;
+
+        public EmailController(IConfiguration config)
+        {
+            _connectionString = config["Rika-Email-Connection-String"]!;
+            _accessToken = config["Email-Service-Token-AccessKey"]!;
+        }
+        [Authorize]
+        [HttpPost]
+        public IActionResult SendEmail()
+        {
+            var service = new EmailService();
+            service.SendDemoEmail(_connectionString);
+            return Ok();
+        }
+
+        [HttpGet]
+        public string GetToken()
+        {
+            var service = new TokenGeneratorService();
+            return service.GenerateAccessToken(_accessToken);
+        }
+
+    }
+}
