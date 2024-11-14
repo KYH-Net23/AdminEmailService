@@ -1,7 +1,7 @@
 using APIWeaver;
 using Azure.Identity;
 using EmailProvider.Extensions;
-using Microsoft.IdentityModel.Tokens;
+using EmailProvider.Middleware;
 using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 
@@ -33,6 +33,12 @@ builder.Services.AddControllers();
 
 builder.Services.AddAuthenticationExtension(builder);
 
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("IdentityPolicy", policy => policy.RequireClaim("Identity"))
+    .AddPolicy("OrderPolicy", policy => policy.RequireClaim("Order"))
+    .AddPolicy("ShippingPolicy", policy => policy.RequireClaim("Shipping"))
+    .AddPolicy("PaymentPolicy", policy => policy.RequireClaim("Payment"));
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -48,6 +54,8 @@ app.MapScalarApiReference(o =>
 
 
 app.UseHttpsRedirection();
+
+app.UseMiddleware<PolicyMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -1,6 +1,5 @@
 ﻿using EmailProvider.EmailServices;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EmailProvider.Controllers
