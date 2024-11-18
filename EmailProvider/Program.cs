@@ -1,62 +1,95 @@
-using APIWeaver;
 using Azure.Identity;
-using EmailProvider.Extensions;
-using EmailProvider.Middleware;
+using EmailProvider.EmailServices;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Scalar.AspNetCore;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddOpenApi(options =>
-{
-    options.AddSecurityScheme("Bearer", scheme =>
-    {
-        scheme.In = ParameterLocation.Header;
-        scheme.Type = SecuritySchemeType.OAuth2;
-        scheme.Flows = new OpenApiOAuthFlows
-        {
-            ClientCredentials = new OpenApiOAuthFlow
-            {
-                TokenUrl = new Uri("https://localhost:5001/oauth2/token")
-            }
-        };
-    });
-    options.AddAuthResponse();
-});
+
+// Configure Azure Key Vault
+var vaultUrl = new Uri(builder.Configuration["VaultUrl"]!);
+builder.Configuration.AddAzureKeyVault(vaultUrl, new DefaultAzureCredential());
 
 var connectionString = builder.Configuration["Rika-Email-Connection-String"]!;
 var secretKey = builder.Configuration["Email-Service-Token-AccessKey"];
-var vaultUrl = new Uri(builder.Configuration["VaultUrl"]!);
-
-builder.Configuration.AddAzureKeyVault(vaultUrl, new DefaultAzureCredential());
-
-builder.Services.AddControllers();
-
-builder.Services.AddAuthenticationExtension(builder);
 
 builder.Services.AddAuthorizationBuilder()
-    .AddPolicy("IdentityPolicy", policy => policy.RequireClaim("Identity"))
-    .AddPolicy("OrderPolicy", policy => policy.RequireClaim("Order"))
-    .AddPolicy("ShippingPolicy", policy => policy.RequireClaim("Shipping"))
-    .AddPolicy("PaymentPolicy", policy => policy.RequireClaim("Payment"));
+    .AddPolicy("PaymentProvider", policy =>
+         {
+            policy.RequireClaim("PaymentProvider");
+         })
+    .AddPolicy("OrderProvider", policy =>
+         {
+             policy.RequireClaim("OrderProvider");
+         })
+    .AddPolicy("IdentityProvider", policy =>
+        {
+            policy.RequireClaim("IdentityProvider");
+        });
 
+// Add services
+
+builder.Services.AddScoped<IdentityEmailService>();
+builder.Services.AddScoped<OrderEmailService>();
+
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-var app = builder.Build();
-
-app.MapOpenApi();
-app.MapScalarApiReference(o =>
+builder.Services.AddSwaggerGen(options =>
 {
-    o.WithTheme(ScalarTheme.BluePlanet)
-     .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
-     .WithPreferredScheme("Bearer");
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
 });
 
+// Configure authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidIssuer = "https://www.rika.se/",
+        ValidAudience = "https://www.rika.se/",
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!)),
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateIssuerSigningKey = true
+    };
+});
+
+// Build and configure the application
+var app = builder.Build();
+
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Your API v1");
+});
 
 app.UseHttpsRedirection();
-
-app.UseMiddleware<PolicyMiddleware>();
-
+// app.UseMiddleware<PolicyMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 

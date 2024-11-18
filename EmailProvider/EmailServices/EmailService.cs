@@ -1,5 +1,7 @@
 ﻿using Azure;
 using Azure.Communication.Email;
+using EmailProvider.Models.DataModels;
+using System.Text;
 
 namespace EmailProvider.EmailServices
 {
@@ -29,6 +31,7 @@ namespace EmailProvider.EmailServices
                 WaitUntil.Completed,
                 emailMessage);
         }
-        
+
+
     }
 }

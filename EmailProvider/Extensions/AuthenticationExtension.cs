@@ -15,8 +15,8 @@ namespace EmailProvider.Extensions
                 ValidateIssuer = true,
                 ValidateAudience = true,
                 ValidateIssuerSigningKey = true,
-                ValidIssuer = "Kimmo",
-                ValidAudience = "Gurra"
+                ValidIssuer = "https://www.rika.se/",
+                ValidAudience = "https://www.rika.se/"
             };
 
             services.AddAuthentication(options => {

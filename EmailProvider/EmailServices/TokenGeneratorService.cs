@@ -12,15 +12,15 @@ namespace EmailProvider.EmailServices
             var key = Encoding.UTF8.GetBytes(secretKey);
             var claims = new List<Claim>
             {
-                new(JwtRegisteredClaimNames.Name, "Gustav")
+                new(JwtRegisteredClaimNames.Name, "https://www.rika.se/")
             };
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddMinutes(5),
-                Issuer = "Kimmo",
-                Audience = "Gurra",
+                Issuer = "https://www.rika.se/",
+                Audience = "https://www.rika.se/",
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 

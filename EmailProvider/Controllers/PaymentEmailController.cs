@@ -5,11 +5,11 @@ namespace EmailProvider.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-[Authorize(Policy = "PaymentPolicy")]
+[Authorize(Policy = "PaymentProvider")]
 public class PaymentEmailController : ControllerBase
 {
     [HttpGet]
-    public IActionResult GetTestEndpoint()
+    public IActionResult SendOrderConfirmation()
     {
         return Ok();
     }

@@ -16,7 +16,7 @@ namespace EmailProvider.Controllers
             _connectionString = config["Rika-Email-Connection-String"]!;
             _accessToken = config["Email-Service-Token-AccessKey"]!;
         }
-        [Authorize]
+        //[Authorize]
         [HttpPost]
         public IActionResult SendEmail()
         {
