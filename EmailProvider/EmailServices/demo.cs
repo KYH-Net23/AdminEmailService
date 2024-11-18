@@ -1,8 +1,6 @@
-﻿public class OrderConfirmationModel
+﻿public class demo
 {
-    // Allmänna egenskaper
-    public string ConnectionString { get; set; } = string.Empty; // För e-postklienten
-    public string Receiver { get; set; } = string.Empty; // Mottagarens e-postadress
+    public string Receiver { get; set; } = string.Empty;
     public string ExtraContent { get; set; } = string.Empty; // Extrainnehåll, t.ex. kundens namn
 
     // Betalningssession

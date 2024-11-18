@@ -1,4 +1,5 @@
 ﻿using EmailProvider.EmailServices;
+using EmailProvider.Models.OrderConfirmationModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,26 +7,24 @@ namespace EmailProvider.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-[Authorize(Policy = "OrderProvider")]
-public class OrderEmailController : ControllerBase
+//[Authorize(Policy = "OrderProvider")]
+public class OrderConfirmationController : ControllerBase
 {
 
-    private readonly string _connectionString;
     private readonly OrderEmailService _orderEmailService;
 
-    public OrderEmailController(OrderEmailService orderEmailService, string connectionString)
+    public OrderConfirmationController(OrderEmailService orderEmailService)
     {
         _orderEmailService = orderEmailService;
-        _connectionString = connectionString;
     }
-    [HttpGet]
-    public IActionResult SendOrderConfirmation(OrderConfirmationModel model)
+    [HttpPost]
+    public IActionResult SendOrderConfirmation([FromBody] OrderConfirmationModel model)
     {
         if (ModelState.IsValid)
         {
             try
             {
-                _orderEmailService.SendOrderConfirmation(model, _connectionString);
+                _orderEmailService.SendOrderConfirmation(model);
                 return Ok();
             }
             catch

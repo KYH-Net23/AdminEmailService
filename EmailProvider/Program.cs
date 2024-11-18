@@ -1,6 +1,7 @@
 using Azure.Identity;
 using EmailProvider.EmailServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
@@ -30,8 +31,8 @@ builder.Services.AddAuthorizationBuilder()
 
 // Add services
 
-builder.Services.AddScoped<IdentityEmailService>();
-builder.Services.AddScoped<OrderEmailService>();
+builder.Services.AddTransient<IdentityEmailService>();
+builder.Services.AddTransient(_ => new OrderEmailService(connectionString));
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
