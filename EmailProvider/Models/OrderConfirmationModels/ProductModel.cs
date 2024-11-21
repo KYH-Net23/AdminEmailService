@@ -6,7 +6,8 @@ namespace EmailProvider.Models.OrderConfirmationModels
     {
         [Required]
         [MinLength(2, ErrorMessage = "Name must be atleast 2 characters.")]
-        public string Name { get; set; } = null!;
+        public string Name { get; set; } = null!;      
+        public string? Description { get; set; }
         [Required]
         [Range(1, 10_000)]
         public int Amount { get; set; }

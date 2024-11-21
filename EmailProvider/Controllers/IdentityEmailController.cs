@@ -7,7 +7,7 @@ namespace EmailProvider.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-[Authorize(Policy = "IdentityProvider")]
+//[Authorize(Policy = "IdentityProvider")]
 public class IdentityEmailController : ControllerBase
 {
 

@@ -7,7 +7,7 @@ namespace EmailProvider.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-//[Authorize(Policy = "OrderProvider")]
+//[Authorize(Policy = "PaymentProvider")]
 public class OrderConfirmationController : ControllerBase
 {
 
