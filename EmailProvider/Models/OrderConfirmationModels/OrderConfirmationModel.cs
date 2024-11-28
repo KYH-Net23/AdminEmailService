@@ -1,10 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
 
 namespace EmailProvider.Models.OrderConfirmationModels
 {
     public class OrderConfirmationModel
     {
-
+        public string EmailType { get; set; } = "Order";
         [Required]
         public string ReceivingEmail { get; set; } = null!;
         [Required]

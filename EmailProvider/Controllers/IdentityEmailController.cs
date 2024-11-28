@@ -1,4 +1,5 @@
 ﻿using EmailProvider.EmailServices;
+using EmailProvider.EmailServices.EmailQueue;
 using EmailProvider.Models.DataModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,21 +14,21 @@ public class IdentityEmailController : ControllerBase
 
     private readonly string _connectionString;
     private readonly string _accessToken;
-    private readonly IdentityEmailService _emailService;
+    private readonly EmailQueueService _emailQueueService;
 
-    public IdentityEmailController(IConfiguration config, IdentityEmailService emailService)
+    public IdentityEmailController(IConfiguration config, EmailQueueService emailService)
     {
         _connectionString = config["Rika-Email-Connection-String"]!;
         _accessToken = config["Email-Service-Token-AccessKey"]!;
-        _emailService = emailService;
+        _emailQueueService = emailService;
     }
 
     [HttpPost("/confirm")]
-    public IActionResult ConfirmEmail([FromBody] IdentityEmailModel model)
+    public async Task<IActionResult> ConfirmEmail([FromBody] IdentityEmailModel model)
     {
         if (ModelState.IsValid)
         {
-            _emailService.SendConfirmationMessageAsync(model, _connectionString);
+            await _emailQueueService.EnQueueEmailAsync(model);
             return Ok();
         }
         else
@@ -37,11 +38,11 @@ public class IdentityEmailController : ControllerBase
     }
 
     [HttpPost("/reset")]
-    public IActionResult ResetPassword([FromBody] IdentityEmailModel model)
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModel model)
     {
         if (ModelState.IsValid)
         {
-            _emailService.ResetPasswordAsync(model, _connectionString);
+            await _emailQueueService.EnQueueEmailAsync(model);
             return Ok();
         }
         else
@@ -51,11 +52,11 @@ public class IdentityEmailController : ControllerBase
     }
 
     [HttpPost("/welcome")]
-    public IActionResult WelcomeEmail([FromBody] IdentityEmailModel model)
+    public async Task<IActionResult> WelcomeEmail([FromBody] WelcomeEmailModel model)
     {
         if (ModelState.IsValid)
         {
-            _emailService.SendWelcomeEmailAsync(model, _connectionString);
+            await _emailQueueService.EnQueueEmailAsync(model);
             return Ok();
         }
         else

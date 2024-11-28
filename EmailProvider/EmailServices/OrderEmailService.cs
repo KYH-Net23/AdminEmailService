@@ -1,18 +1,12 @@
 ﻿using Azure.Communication.Email;
 using System.Text;
 using EmailProvider.Models.OrderConfirmationModels;
-using System.Linq;
-using System.Net.Mail;
-using System.Threading.Tasks;
 using Azure;
-using System.Reflection;
-using System.Collections.Generic;
-using static System.Net.Mime.MediaTypeNames;
-using System.Collections;
+using EmailProvider.Interfaces;
 
 namespace EmailProvider.EmailServices
 {
-    public class OrderEmailService
+    public class OrderEmailService : IEmailService<OrderConfirmationModel>
     {
 
         private readonly string _connectionString;
@@ -24,21 +18,8 @@ namespace EmailProvider.EmailServices
             _client = new EmailClient(_connectionString);
         }
 
-        public void SendOrderConfirmation(OrderConfirmationModel model)
+        public async Task SendEmailAsync(OrderConfirmationModel model)
         {
-            //StringBuilder builder = new StringBuilder();
-            //foreach (var product in model.Products)
-            //{
-            //    builder.AppendLine($"<td style=\"border: 1px solid #dddddd; max-width: 150px; object-fit: cover; padding: 10px; text-align: left; background-color: #f2f2f2;\"><img src=\"{product?.ImageUrl}\" /></td>");
-            //    builder.AppendLine($"<td style=\"border: 1px solid #dddddd; padding: 10px; text-align: left; background-color: #f2f2f2;\">{product!.Name}</td>");
-            //    builder.AppendLine($"<td style=\"border: 1px solid #dddddd; padding: 10px; text-align: left; background-color: #f2f2f2;\">{product.Amount}</td>");
-            //    builder.AppendLine($"<td style=\"border: 1px solid #dddddd; padding: 10px; text-align: left; background-color: #f2f2f2;\">{product.Price:C2}</td>");
-            //    builder.AppendLine($"<td style=\"border: 1px solid #dddddd; padding: 10px; text-align: left; background-color: #f2f2f2;\">{product?.DiscountedPrice}</td>");
-            //}
-
-
-
-
             StringBuilder builder = new StringBuilder();
             foreach (var product in model.Products)
             {
@@ -82,67 +63,6 @@ namespace EmailProvider.EmailServices
             {
                 tracking = "<p><strong>Tracking:</strong> <a href=\\\"{model.Shipping.TrackingLink}\\\" style=\\\"color: #007BFF;\\\">Track your package</a></p>";
             }
-
-
-            var temp = $$"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-            </head>
-            <body>
-            <div style="font-family: 'Tahoma', Arial, sans-serif; margin-bottom: 72px">
-                        <h1 style="text-align: center; margin-bottom: 36px; font-family: 'Tahoma', Arial, sans-serif;">Here it comes! Your order has been shipped.</h1>
-                        <a style="max-width: 150px; text-decoration: none; width: auto; background: black; color: white; padding: 12px 24px; align-items: center; border-radius: 24px; font-family: 'Tahoma', Arial, sans-serif;" href="{{model?.Shipping.TrackingLink}}">Track package</a>
-                        </div>
-                        {{builder}}                     
-              <div style="text-align: right; padding-top: 12px; font-family: 'Tahoma', Arial, sans-serif;">
-                <h3 style="font-size: 18px; font-weight: bold; color: #333; font-family: 'Tahoma', Arial, sans-serif;">Total: ${{model!.OrderTotal}}</h3>
-              </div>
-
-              <div style="display: flex; justify-content: center;">
-                <a style="max-width: 150px; text-decoration: none; width: auto; background: black; color: white; padding: 12px 24px; text-align: center; border-radius: 24px; font-family: 'Tahoma', Arial, sans-serif;" href="{{model?.Invoice.InvoiceUrl}}">View Receipt</a>
-              </div>
-
-              <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 24px 0;">
-
-              <div style="display: flex; justify-content: space-evenly; gap: 16px;">
-                <div style="text-align: center; font-family: 'Tahoma', Arial, sans-serif;">
-                  <h3 style="font-size: 16px; margin-bottom: 8px; color: #333; font-family: 'Tahoma', Arial, sans-serif;">Shipping From</h3>
-                  <p style="color: rgba(0,0,0,0.7); font-size: 14px; font-family: 'Tahoma', Arial, sans-serif;">Rika Centrallager</p>
-                  <p style="color: rgba(0,0,0,0.7); font-size: 14px; font-family: 'Tahoma', Arial, sans-serif;">12345 Stockholm</p>
-                  <p style="color: rgba(0,0,0,0.7); font-size: 14px; font-family: 'Tahoma', Arial, sans-serif;">Stockholmsgatan</p>
-                  <p style="color: rgba(0,0,0,0.7); font-size: 14px; font-family: 'Tahoma', Arial, sans-serif;">Sweden</p>
-                </div>
-                <div style="text-align: center; font-family: 'Tahoma', Arial, sans-serif;">
-                  <h3 style="font-size: 16px; margin-bottom: 8px; color: #333; font-family: 'Tahoma', Arial, sans-serif;">Delivery Address</h3>
-                  <p style="color: rgba(0,0,0,0.7); font-size: 14px; font-family: 'Tahoma', Arial, sans-serif;">{{deliveryAddress}}</p>
-                  <p style="color: rgba(0,0,0,0.7); font-size: 14px; font-family: 'Tahoma', Arial, sans-serif;">{{model!.Shipping.CustomerDeliveryInformation.StreetAddress}}</p>
-                  <p style="color: rgba(0,0,0,0.7); font-size: 14px; font-family: 'Tahoma', Arial, sans-serif;">{{model.Shipping.CustomerDeliveryInformation.PostalCode}} {{model.Shipping.CustomerDeliveryInformation.City}}</p>
-                  <p style="color: rgba(0,0,0,0.7); font-size: 14px; font-family: 'Tahoma', Arial, sans-serif;">{{phoneNumber}}</p>
-                  <p style="color: rgba(0,0,0,0.7); font-size: 14px; font-family: 'Tahoma', Arial, sans-serif;">{{model.Shipping.CustomerDeliveryInformation.Country}}</p>
-                </div>
-                <div style="text-align: center; font-family: 'Tahoma', Arial, sans-serif;">
-                  <h3 style="font-size: 16px; margin-bottom: 8px; color: #333; font-family: 'Tahoma', Arial, sans-serif;">Billing Address</h3>
-                  <p style="color: rgba(0,0,0,0.7); font-size: 14px; font-family: 'Tahoma', Arial, sans-serif;">{{model!.Shipping.CustomerDeliveryInformation.FullName}}</p>
-                  <p style="color: rgba(0,0,0,0.7); font-size: 14px; font-family: 'Tahoma', Arial, sans-serif;">{{model!.Shipping.CustomerDeliveryInformation.StreetAddress}}</p>
-                  <p style="color: rgba(0,0,0,0.7); font-size: 14px; font-family: 'Tahoma', Arial, sans-serif;">{{model.Shipping.CustomerDeliveryInformation.PostalCode}} {{model.Shipping.CustomerDeliveryInformation.City}}</p>
-                  <p style="color: rgba(0,0,0,0.7); font-size: 14px; font-family: 'Tahoma', Arial, sans-serif;">{{model.Shipping.CustomerDeliveryInformation.Country}}</p>
-                </div>
-              </div>
-
-              <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 24px 0;">
-
-              <div style="font-family: 'Tahoma', Arial, sans-serif;">
-                <p style="color: rgba(0,0,0,0.7); font-size: 14px; text-align: center; font-family: 'Tahoma', Arial, sans-serif;">Rika - It will arrive, eventually!</p>
-                <p style="color: rgba(0,0,0,0.7); font-size: 14px; text-align: center; font-family: 'Tahoma', Arial, sans-serif;">We'd love your feedback! <a href="" style="color: #000; text-decoration: underline; font-family: 'Tahoma', Arial, sans-serif;">Leave a review</a>.</p>
-              </div>
-            </div>
-            </body>
-            </html>
-            """;
-
-
-
 
             var temp2 = $"""
                         <div style="font-family: Tahoma, Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9;">
@@ -233,57 +153,7 @@ namespace EmailProvider.EmailServices
               </table>
             </div>```
 
-            """;
-
-
-
-
-            //var emailBody = $$"""
-            //<!DOCTYPE html>
-            //<html>
-            //<head>
-            //</head>
-            //<body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f9f9f9;">
-            //    <div style="max-width: 900px; margin: 20px auto; background: #ffffff; border: 1px solid #dddddd; padding: 20px; text-align: center;">
-            //        <h1 style="font-size: 24px; font-weight: bold; color: #333333; margin-bottom: 20px;">Order Confirmation</h1>
-            //        <p style="font-size: 16px; color: #555555; margin-bottom: 30px;">Thank you for your order!</p>
-            //        <div style="text-align: left; font-size: 14px; color: #333333; line-height: 1.5;">
-            //            <h2 style="font-size: 18px; color: #333333; margin-bottom: 10px;">Shipping Information</h2>
-            //            <p><strong>Name:</strong> {{model!.Shipping.CustomerDeliveryInformation.FullName}}</p>
-            //            <p><strong>Delivery Address:</strong> {{deliveryAddress}}</p>
-            //            <p><strong>Phone:</strong> {{phoneNumber}}</p>
-            //            <p><strong>Expected Arrival:</strong> {{model.Shipping.OrderArrival}}</p>
-            //           {{tracking}}
-            //        </div>
-            //        <div style="text-align: left; font-size: 14px; color: #333333; line-height: 1.5;">
-            //            <h2 style="font-size: 18px; color: #333333; margin-bottom: 10px;">Invoice Information</h2>
-            //            <p><strong>Name:</strong> {{model.Invoice.FullName}}</p>
-            //            <p><strong>Address:</strong> {{model.Invoice.StreetAddress}}, {{model.Invoice.City}}, {{model.Invoice.PostalCode}}, {{model.Invoice.Country}}</p>
-            //            <p><strong>Payment Method:</strong> {{model.Invoice.PaymentOption}}</p>
-            //        </div>
-            //        <div style="text-align: left; font-size: 14px; color: #333333; line-height: 1.5;">
-            //            <h2 style="font-size: 18px; color: #333333; margin-bottom: 10px;">Order Summary</h2>
-            //            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-            //                <thead>
-            //                    <tr>
-            //                        <th style="border: 1px solid #dddddd; max-width: 150px; padding: 10px; text-align: left; background-color: #f2f2f2;"></th>
-            //                        <th style="border: 1px solid #dddddd; padding: 10px; text-align: left; background-color: #f2f2f2;">Product</th>
-            //                        <th style="border: 1px solid #dddddd; padding: 10px; text-align: left; background-color: #f2f2f2;">Amount</th>
-            //                        <th style="border: 1px solid #dddddd; padding: 10px; text-align: left; background-color: #f2f2f2;">Price</th>
-            //                        <th style="border: 1px solid #dddddd; padding: 10px; text-align: left; background-color: #f2f2f2;">Discounted Price</th>
-            //                    </tr>
-            //                </thead>
-            //                <tbody>
-            //                 {{builder}}
-            //                </tbody>
-            //            </table>
-            //            <p style = "text-align: right; font-size: 16px; font-weight: bold;" > Order Total: {{model.OrderTotal:C}}</p>
-            //        </div>
-            //        <p style = "margin-top: 30px; font-size: 12px; color: #777777;" > Rika – It will arrive, eventually! </p>
-            //    </div>
-            //</body>
-            //</html>
-            //""";
+            """; 
 
             var emailMessage = new EmailMessage(
                 senderAddress: "DoNotReply@beb6ca96-5cd4-43a4-a4bc-6723d17f26d9.azurecomm.net",
@@ -294,7 +164,7 @@ namespace EmailProvider.EmailServices
                 }
             );
 
-            var sendOperation = _client.Send(WaitUntil.Completed, emailMessage);
+            var sendOperation = await _client.SendAsync(WaitUntil.Completed, emailMessage);
         }
 
     }

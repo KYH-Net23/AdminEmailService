@@ -1,5 +1,7 @@
 using Azure.Identity;
+using Azure.Messaging.ServiceBus;
 using EmailProvider.EmailServices;
+using EmailProvider.EmailServices.EmailQueue;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -14,6 +16,9 @@ builder.Configuration.AddAzureKeyVault(vaultUrl, new DefaultAzureCredential());
 
 var connectionString = builder.Configuration["Rika-Email-Connection-String"]!;
 var secretKey = builder.Configuration["Email-Service-Token-AccessKey"];
+var azureServiceBusConnection = builder.Configuration["rika-service-bus"];
+
+
 
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("PaymentProvider", policy =>
@@ -30,10 +35,27 @@ builder.Services.AddAuthorizationBuilder()
         });
 
 // Add services
-
-builder.Services.AddTransient<IdentityEmailService>();
-builder.Services.AddTransient(_ => new OrderEmailService(connectionString));
-
+builder.Services.AddSingleton(new ServiceBusClient(azureServiceBusConnection));
+builder.Services.AddSingleton(_ => new OrderEmailService(connectionString));
+builder.Services.AddSingleton(_ => new WelcomeEmailService(connectionString));
+builder.Services.AddSingleton(_ => new VerificationEmailService(connectionString));
+builder.Services.AddSingleton(_ => new ResetPasswordService(connectionString));
+builder.Services.AddSingleton<EmailQueueService>(x =>
+{
+    var client = x.GetRequiredService<ServiceBusClient>();
+    var queueName = builder.Configuration["QueueName"];
+    return new EmailQueueService(client, queueName!);
+});
+builder.Services.AddHostedService<EmailProcessingService>(x =>
+{
+    var serviceBusClient = x.GetRequiredService<ServiceBusClient>();
+    var queueName = builder.Configuration["QueueName"];
+    var orderEmailService = x.GetRequiredService<OrderEmailService>();
+    var welcomeEmailService = x.GetRequiredService<WelcomeEmailService>();
+    var verificationEmailService = x.GetRequiredService<VerificationEmailService>();
+    var resetEmailService = x.GetRequiredService<ResetPasswordService>();
+    return new EmailProcessingService(serviceBusClient, orderEmailService, queueName!, welcomeEmailService, verificationEmailService, resetEmailService);
+});
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>

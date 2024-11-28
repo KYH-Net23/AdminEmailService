@@ -1,4 +1,5 @@
 ﻿using EmailProvider.EmailServices;
+using EmailProvider.EmailServices.EmailQueue;
 using EmailProvider.Models.OrderConfirmationModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,21 +11,21 @@ namespace EmailProvider.Controllers;
 //[Authorize(Policy = "PaymentProvider")]
 public class OrderConfirmationController : ControllerBase
 {
+    private readonly EmailQueueService _emailQueueService;
 
-    private readonly OrderEmailService _orderEmailService;
-
-    public OrderConfirmationController(OrderEmailService orderEmailService)
+    public OrderConfirmationController(EmailQueueService emailQueueService)
     {
-        _orderEmailService = orderEmailService;
+        _emailQueueService = emailQueueService;
     }
     [HttpPost]
-    public IActionResult SendOrderConfirmation([FromBody] OrderConfirmationModel model)
+    public async Task<IActionResult> SendOrderConfirmation([FromBody] OrderConfirmationModel model)
     {
         if (ModelState.IsValid)
         {
             try
             {
-                _orderEmailService.SendOrderConfirmation(model);
+                model.EmailType = "Order";
+                await _emailQueueService.EnQueueEmailAsync(model);
                 return Ok();
             }
             catch
