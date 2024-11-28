@@ -24,7 +24,6 @@ public class OrderConfirmationController : ControllerBase
         {
             try
             {
-                model.EmailType = "Order";
                 await _emailQueueService.EnQueueEmailAsync(model);
                 return Ok();
             }

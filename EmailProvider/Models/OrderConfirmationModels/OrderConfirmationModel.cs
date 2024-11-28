@@ -5,7 +5,7 @@ namespace EmailProvider.Models.OrderConfirmationModels
 {
     public class OrderConfirmationModel
     {
-        public string EmailType { get; set; } = "Order";
+        public string EmailType = "Order";
         [Required]
         public string ReceivingEmail { get; set; } = null!;
         [Required]

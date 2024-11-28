@@ -33,10 +33,9 @@ namespace EmailProvider.EmailServices.EmailQueue
                 try
                 {
                     var body = Encoding.UTF8.GetString(args.Message.Body);
-                    Type type = CheckModelType(body);
-                    var email = JsonConvert.DeserializeObject(body, type);
-                    var service = CheckEmailType(email);
-                    await service!.SendEmailAsync(email);
+                    var emailType = DetermineEmailType(body);
+                    var email = DeserializeEmail(body, emailType);
+                    await SendEmailByType(email, emailType);
                 }
                 catch
                 {
@@ -57,25 +56,49 @@ namespace EmailProvider.EmailServices.EmailQueue
             await _processor.StopProcessingAsync(stoppingToken);
         }
 
-        private IEmailService<T>? CheckEmailType<T>(T email)
+        private string DetermineEmailType(string body)
         {
-            return email switch
+            return body switch
             {
-                OrderConfirmationModel => (IEmailService<T>?)_orderEmailService,
-                VerificationEmailModel => (IEmailService<T>?)_verificationEmailService,
-                ResetPasswordModel => (IEmailService<T>?)_resetPasswordService,
-                WelcomeEmailModel => (IEmailService<T>?)_welcomeEmailService,
-                _ => null
+                string b when b.Contains("\"EmailType\":\"Order\"") => "Order",
+                string b when b.Contains("\"EmailType\":\"Welcome\"") => "Welcome",
+                string b when b.Contains("\"EmailType\":\"Verification\"") => "Verification",
+                string b when b.Contains("\"EmailType\":\"Reset\"") => "Reset",
+                _ => throw new InvalidOperationException("Unknown email type")
             };
         }
 
-        private Type CheckModelType(string body)
+        private object DeserializeEmail(string body, string emailType)
         {
-            if (body.Contains("Order")) return typeof(OrderConfirmationModel);
-            if (body.Contains("Verification")) return typeof(VerificationEmailModel);
-            if (body.Contains("Reset")) return typeof(ResetPasswordModel);
-            if (body.Contains("Welcome")) return typeof(WelcomeEmailModel);
-            throw new InvalidOperationException("Unknown email type.");
+            return emailType switch
+            {
+                "Order" => JsonConvert.DeserializeObject<OrderConfirmationModel>(body)!,
+                "Welcome" => JsonConvert.DeserializeObject<WelcomeEmailModel>(body)!,
+                "Verification" => JsonConvert.DeserializeObject<VerificationEmailModel>(body)!,
+                "Reset" => JsonConvert.DeserializeObject<ResetPasswordModel>(body)!,
+                _ => throw new InvalidOperationException("Unknown email type")
+            };
+        }
+
+        private async Task SendEmailByType(object email, string emailType)
+        {
+            switch (emailType)
+            {
+                case "Order":
+                    await _orderEmailService.SendEmailAsync((OrderConfirmationModel)email);
+                    break;
+                case "Welcome":
+                    await _welcomeEmailService.SendEmailAsync((WelcomeEmailModel)email);
+                    break;
+                case "Verification":
+                    await _verificationEmailService.SendEmailAsync((VerificationEmailModel)email);
+                    break;
+                case "Reset":
+                    await _resetPasswordService.SendEmailAsync((ResetPasswordModel)email);
+                    break;
+                default:
+                    throw new InvalidOperationException("Unknown email type");
+            }
         }
 
     }

@@ -24,7 +24,7 @@ public class IdentityEmailController : ControllerBase
     }
 
     [HttpPost("/confirm")]
-    public async Task<IActionResult> ConfirmEmail([FromBody] IdentityEmailModel model)
+    public async Task<IActionResult> ConfirmEmail([FromBody] VerificationEmailModel model)
     {
         if (ModelState.IsValid)
         {
